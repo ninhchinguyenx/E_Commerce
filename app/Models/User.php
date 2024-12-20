@@ -21,6 +21,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'address',
+        'birthday',
+        'img',
+        'role_id',
+        'is_active',
     ];
 
     /**
@@ -28,10 +33,10 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    // protected $hidden = [
+    //     'password',
+    //     'remember_token',
+    // ];
 
     /**
      * The attributes that should be cast.
@@ -39,7 +44,12 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'is_active' => 'boolean',
+        // 'password' => 'hashed',
     ];
+
+    public $timestamps = false;
+    public function role(){
+        return $this->belongsTo(Role::class);
+    }
 }
