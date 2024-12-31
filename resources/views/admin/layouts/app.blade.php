@@ -9,9 +9,7 @@
     <style>
         body {
             display: flex;
-            height: 100vh;
             margin: 0;
-            overflow: hidden;
         }
         #sidebar {
             width: 250px;
@@ -57,23 +55,7 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <div id="sidebar" class="d-flex flex-column">
-        <div class="logo">
-            <h4>Logo</h4>
-        </div>
-        <div class="menu-item">
-            <i class="bi bi-house"></i><span>Dashboard</span>
-        </div>
-        <div class="menu-item">
-           <a href="{{route('products.index')}}" class="text-white text-decoration-none"> <i class="bi bi-box"></i><span>Quản lý sản phẩm</span> </a>
-        </div>
-        <div class="menu-item">
-            <i class="bi bi-gear"></i><span>Cài đặt</span>
-        </div>
-        <div class="menu-item" id="toggleSidebar">
-            <i class="bi bi-list"></i><span>Đóng/mở</span>
-        </div>
-    </div>
+    @include('admin.layouts.components.sidebar')
 
     <!-- Main Content -->
     <div id="content">
@@ -86,5 +68,6 @@
             document.getElementById('sidebar').classList.toggle('collapsed');
         });
     </script>
+    @yield('scripts')
 </body>
 </html>

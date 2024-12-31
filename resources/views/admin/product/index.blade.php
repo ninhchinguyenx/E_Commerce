@@ -1,168 +1,172 @@
 @extends('admin.layouts.app');
 
 @section('content')
+<style>
+    /* Khu vực upload ảnh chính */
+.upload-area {
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.upload-area:hover {
+    background-color: #e9ecef;
+}
+
+/* Nút chọn ảnh */
+.upload-area button {
+    margin-top: 2px;
+}
+
+/* Khu vực preview ảnh chính */
+.preview-area {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.preview-area .preview-image {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.preview-area .preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Nút xóa trên ảnh */
+.preview-area .preview-image .remove-preview {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(255, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0;
+    transition: background-color 0.3s ease;
+}
+
+.preview-area .preview-image .remove-preview:hover {
+    background-color: rgba(255, 0, 0, 1);
+}
+
+</style>
 <div class="container mt-5">
     <h1 class="mb-4">Quản lý sản phẩm</h1>
 
     <!-- Button to open Add Product modal -->
     <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addProductModal">Thêm sản phẩm</button>
-
+        @if(session('error'))
+            <div class="alert alert-danger">
+                {!! nl2br(e(session('error'))) !!}
+            </div>
+        @endif
     <!-- Product Table -->
     <table class="table table-bordered">
         <thead class="table-dark">
             <tr>
                 <th>#</th>
+                <th>Ảnh chính sản phẩm</th>
                 <th>Tên sản phẩm</th>
-                <th>Giá</th>
-                <th>Mô tả</th>
+                <th>Giá gốc</th>
+                <th>Giá sale</th>
+                <th>Danh mục</th>
+                <th>Kích hoạt</th>
+                <th>Tags</th>
                 <th>Hành động</th>
             </tr>
         </thead>
         <tbody id="productTableBody">
             <!-- Example row -->
-            <tr>
-                <td>1</td>
-                <td>Sản phẩm A</td>
-                <td>100,000 VND</td>
-                <td>Mô tả sản phẩm A</td>
-                <td>
-                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal">Sửa</button>
-                    <button class="btn btn-danger btn-sm">Xóa</button>
-                </td>
-            </tr>
+            @foreach ($products as $item)     
+                <tr>
+                    <td>{{$item->sku}}</td>
+                    <td>
+                        @if($item->img_thumbnail && Storage::exists($item->img_thumbnail))
+                            <img src="{{asset('storage/' . $item->img_thumbnail)}}" alt="" height="100" >
+                        @else
+                          <span>Không có hình ảnh</span> 
+                        @endif
+                    </td>
+                    <td>{{$item->name}}</td>
+                    <td>{{ number_format($item->price_regular, 2) }} ₫</td>
+                    <td>{{ number_format($item->price_sale, 2) }} ₫</td>
+                    <td>
+                        {{$item->category->name}}
+                    </td>
+                    <td>
+                        <span class="badge  {{$item->is_active ? 'text-bg-primary' : 'text-bg-secondary'}} ">{{$item->is_active ? 'Bật' : 'Tắt'}}</span>
+                    </td>
+                    <td>
+                        {{-- dd($item->tags); --}}
+                        @foreach ($item->tags as $tagname)
+                            <span class="badge text-bg-info">{{$tagname->name}}</span>
+                        @endforeach
+                    </td>
+                    <td>
+                        <button class="btn btn-success btn-sm" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#detailProductModal"
+                            data-sku = "{{$item->sku}}"
+                            data-name="{{$item->name}}"
+                            data-price_regular="{{$item->price_regular}}"
+                            data-price_sale="{{$item->price_sale}}"
+                            data-short_description="{{$item->short_description}}"
+                            data-detailed_description="{{$item->detailed_description}}"
+                            data-short_description="{{$item->short_description}}"
+                            data-category="{{$item->category->name}}"
+                            data-tags="{{ json_encode($item->tags)}}"
+                            data-is_active="{{$item->is_active}}"
+                            data-is_hot_deal="{{$item->is_hot_deal}}"
+                            data-is_good_deal="{{$item->is_good_deal}}"
+                            data-is_new="{{$item->is_new}}"
+                            data-img_thumbnail="{{$item->img_thumbnail}}"
+                        >Chi tiết</button>
+                        <a href="{{route('products.edit', $item)}}" class="btn btn-warning btn-sm edit-product-btn">Sửa </a>
+                       
+                        <button class="btn btn-danger btn-sm">Xóa</button>
+                    </td>
+                </tr>
+            @endforeach
         </tbody>
     </table>
-
+    <div>
+        {{ $products->links() }}
+    </div>
     <!-- Add Product Modal -->
-    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addProductModalLabel">Thêm sản phẩm</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form  id="addProductForm" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="row">
-                            <!-- Tên sản phẩm -->
-                            <div class="col-md-6 mb-3">
-                                <label for="name" class="form-label">Tên Sản Phẩm</label>
-                                <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
-                            </div>
-                    
-                            <!-- Slug -->
-                            <div class="col-md-6 mb-3">
-                                <label for="slug" class="form-label">Slug</label>
-                                <input type="text" class="form-control" id="slug" name="slug" value="{{ old('slug') }}">
-                            </div>
-                    
-                            <!-- SKU -->
-                            <div class="col-md-6 mb-3">
-                                <label for="sku" class="form-label">SKU</label>
-                                <input type="text" class="form-control" id="sku" name="sku" value="{{ old('sku') }}">
-                            </div>
-                    
-                            <!-- Giá -->
-                            <div class="col-md-6 mb-3">
-                                <label for="price" class="form-label">Giá</label>
-                                <input type="number" class="form-control" id="price" name="price" value="{{ old('price') }}" required>
-                            </div>
-                    
-                            <!-- Giá giảm -->
-                            <div class="col-md-6 mb-3">
-                                <label for="price_sale" class="form-label">Giá Khuyến Mãi</label>
-                                <input type="number" class="form-control" id="price_sale" name="price_sale" value="{{ old('price_sale') }}">
-                            </div>
-                    
-                            <!-- Số lượng -->
-                            <div class="col-md-6 mb-3">
-                                <label for="quantity" class="form-label">Số Lượng</label>
-                                <input type="number" class="form-control" id="quantity" name="quantity" value="{{ old('quantity') }}" required>
-                            </div>
-                    
-                            <!-- Mô tả ngắn -->
-                            <div class="col-md-12 mb-3">
-                                <label for="short_description" class="form-label">Mô Tả Ngắn</label>
-                                <textarea class="form-control" id="short_description" name="short_description" rows="3">{{ old('short_description') }}</textarea>
-                            </div>
-                    
-                            <!-- Mô tả chi tiết -->
-                            <div class="col-md-12 mb-3">
-                                <label for="detailed_description" class="form-label">Mô Tả Chi Tiết</label>
-                                <textarea class="form-control" id="detailed_description" name="detailed_description" rows="5">{{ old('detailed_description') }}</textarea>
-                            </div>
-                    
-                            <!-- Danh mục -->
-                            <div class="col-md-6 mb-3">
-                                <label for="category_id" class="form-label">Danh Mục</label>
-                                <select class="form-select" id="category_id" name="category_id">
-                                    <option value="">Chọn danh mục</option>
-                                    @foreach ($categories as $category)
-                                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                    
-                            <!-- Checkbox -->
-                            <div class="col-md-12 mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {{ old('is_active') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_active">Kích Hoạt</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_hot_deal" name="is_hot_deal" value="1" {{ old('is_hot_deal') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_hot_deal">Ưu Đãi Nổi Bật</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_good_deal" name="is_good_deal" value="1" {{ old('is_good_deal') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_good_deal">Ưu Đãi Tốt</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_new" name="is_new" value="1" {{ old('is_new') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_new">Sản Phẩm Mới</label>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <button type="submit" class="btn btn-primary">Lưu Sản Phẩm</button>
-                    </form>
-                    
-                </div>
-            </div>
-        </div>
-    </div>
+    @include('admin.product.addProductModal')
 
+    {{-- <!-- Detail Product Modal -->
+    @include('admin.product.detailProductModal') --}}
     <!-- Edit Product Modal -->
-    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editProductModalLabel">Sửa sản phẩm</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editProductForm">
-                        <div class="mb-3">
-                            <label for="editProductName" class="form-label">Tên sản phẩm</label>
-                            <input type="text" class="form-control" id="editProductName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editProductPrice" class="form-label">Giá</label>
-                            <input type="number" class="form-control" id="editProductPrice" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editProductDescription" class="form-label">Mô tả</label>
-                            <textarea class="form-control" id="editProductDescription" rows="3" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Cập nhật</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+
+    
 </div>
 @endsection
 
+@section('scripts')
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"> </script>
+<script src="{{asset('js/product/uploadImg.js') }}"></script>
+{{-- <script src="{{asset('js/product/editProduct.js') }}"></script> --}}
+{{-- <script src="{{asset('js/product/detailProduct.js') }}"></script> --}}
+
+@endsection

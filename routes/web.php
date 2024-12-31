@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\UserController;
 use App\Models\Role;
@@ -30,6 +31,7 @@ Route::prefix('admin')->middleware(['auth.user', 'role:admin,superAdmin'])->grou
     });
     Route::resource('products', ProductController::class );
     Route::resource('categories', CategoryController::class );
+    Route::resource('tags', TagController::class );
 });
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
